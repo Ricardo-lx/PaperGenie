@@ -1,21 +1,21 @@
 from enum import Enum
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List, Dict, Optional
 from pathlib import Path
 
 @dataclass
 class Paper:
     title: str
-    authors: List[str]
-    abstract: str
-    url: str
-    pdf_path: Path = None
+    authors: Optional[List[str]] = None
+    abstract: Optional[str] = None
+    url: Optional[str] = None
+    pdf_path: Optional[Path] = None
 
 @dataclass
 class ResearchData:
     topic: str
-    related_files: List[Path]
-    papers: List[Paper]
+    related_files: Dict[str, str]
+    papers: Dict[str, str]
 
 @dataclass
 class Outline:

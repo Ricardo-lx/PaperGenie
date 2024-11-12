@@ -1,6 +1,8 @@
 .cache/
 .venv/
+.vscode/
 
+docker
 documents/
 logs/
 test/

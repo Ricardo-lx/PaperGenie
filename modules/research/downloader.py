@@ -1,12 +1,15 @@
 import os
 import aiohttp
 import asyncio
+import tempfile
 from enum import Enum
 from tqdm import tqdm
 from typing import List, Dict
 from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 from concurrent.futures import ThreadPoolExecutor
+
+TEMP_DIR = tempfile.gettempdir()
 
 class DownloadStatus(Enum):
     SUCCESS = "成功"
@@ -17,10 +20,11 @@ class DownloadStatus(Enum):
     UNKNOWN_ERROR = "未知错误"
 
 class DownloadResult:
-    def __init__(self, url: str, status: DownloadStatus, message: str = ""):
+    def __init__(self, url: str, status: DownloadStatus, message: str = "", file_path: str = ""):
         self.url = url
         self.status = status
         self.message = message
+        self.filepath = file_path
 
 class DownloadManager:
     def __init__(self, 
@@ -88,7 +92,7 @@ class DownloadManager:
                                 )
                                 
                                 pbar.update(1)
-                                return DownloadResult(url, DownloadStatus.SUCCESS, f"已下载到: {filename}")
+                                return DownloadResult(url, DownloadStatus.SUCCESS, f"已下载到: {filename}", file_path=filename)
                                 
                             elif response.status == 403:
                                 return DownloadResult(url, DownloadStatus.FORBIDDEN, "需要认证或访问被拒绝")
@@ -109,7 +113,29 @@ class DownloadManager:
             
             return DownloadResult(url, DownloadStatus.UNKNOWN_ERROR, "超过最大重试次数")
 
-async def batch_download_pdfs(urls: List[str], output_dir: str = "documents") -> Dict[str, DownloadResult]:
+async def batch_download_pdfs(urls: List[str], output_dir: str = TEMP_DIR) -> Dict[str, DownloadResult]:
+    """Asynchronously downloads multiple PDF files from given URLs.
+    This function handles batch downloading of PDFs with progress tracking and error handling.
+    It creates the output directory if it doesn't exist and manages concurrent downloads.
+    Args:
+        urls (List[str]): List of URLs to download PDFs from
+        output_dir (str, optional): Directory to save downloaded PDFs. Defaults to TEMP_DIR.
+    Returns:
+        Dict[str, DownloadResult]: Dictionary mapping URLs to their download results, containing:
+            - status (DownloadStatus): Result status (SUCCESS, FAILED, etc.)
+            - path (str): Local file path if download successful
+            - message (str): Error message if download failed
+    Examples:
+        ```python
+        urls = ["http://example.com/paper1.pdf", "http://example.com/paper2.pdf"]
+        results = await batch_download_pdfs(urls, "downloads")
+        ```
+    Notes:
+        - Uses a DownloadManager to handle concurrent downloads (default: 5 concurrent downloads)
+        - Shows progress bar during downloads
+        - Prints summary statistics after completion
+        - Prints detailed error information for failed downloads
+    """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 

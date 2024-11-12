@@ -275,7 +275,20 @@ class ArxivResearcher(ResearchInterface):
     async def search_papers(
         self, topic: str, max_results: int = 10, start: int = 0
     ) -> SearchResponse:
-        """从arXiv搜索论文"""
+        """
+        Asynchronously searches for papers on arXiv based on a given topic.
+        This method performs a search query on arXiv's API and handles rate limiting and retries.
+        The results are parsed and returned as a SearchResponse object.
+        Args:
+            topic (str): The search query topic to look for in arXiv papers
+            max_results (int, optional): Maximum number of results to return. Defaults to 10.
+            start (int, optional): Starting index for pagination. Defaults to 0.
+        Returns:
+            SearchResponse: Object containing the search results with paper information
+        Raises:
+            Exception: If API request fails, network error occurs, parsing fails, or max retries exceeded
+        """
+        
         self._validate_parameters(max_results, start)
 
         encoded_topic = urllib.parse.quote(topic)
@@ -336,7 +349,8 @@ async def main():
 
     print(f"总共找到 {results.total_results} 条结果")
     print(f"准备下载 {len(pdfs)} 个PDF文件")
-    await batch_download_pdfs(pdfs)
+    result = await batch_download_pdfs(pdfs)
+    print(result)
 
 
 if __name__ == "__main__":
